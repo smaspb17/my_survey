@@ -1,5 +1,6 @@
 # from rest_framework.permissions import IsAuthenticated
 
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
@@ -67,16 +68,39 @@ class QuestionViewSet(ModelViewSet):
     http_method_names = ('get', 'post', 'put', 'delete')
 
     def get_queryset(self):
-        survey = get_object_or_404(
-            klass=Survey, id=self.kwargs.get('survey_id'))
-        print(survey)
+        survey_id = self.kwargs.get('survey_id')
+        try:
+            survey = Survey.objects.get(id=survey_id)
+        except Survey.DoesNotExist:
+            raise Http404("Опрос id {} не существует".format(survey_id))
+        if not survey.questions.exists():
+            raise Http404(
+                "Опрос id {} не имеет ни одного вопроса".format(survey_id)
+            )
         return survey.questions.all()
 
+    def get_object(self):
+        survey = get_object_or_404(
+            klass=Survey, id=self.kwargs.get('survey_id')
+        )
+        obj = get_object_or_404(
+            klass=Question,
+            id=self.kwargs.get('pk'),
+            survey=survey
+        )
+        return obj
+
     def perform_create(self, serializer):
-        # survey = get_object_or_404(
-        #     klass=Survey, id=self.kwargs.get('survey_id'))
-        serializer.save(
-            survey=Survey.objects.get(id=self.kwargs.get('survey_id')))
+        survey_id = get_object_or_404(
+            klass=Survey, id=self.kwargs.get('survey_id')
+        )
+        serializer.save(survey=survey)
+
+    def perform_create(self, serializer):
+        survey = get_object_or_404(
+            klass=Survey, id=self.kwargs.get('survey_id')
+        )
+        serializer.save(survey=survey)
 
     # def get_queryset(self):
     #     review = get_object_or_404(

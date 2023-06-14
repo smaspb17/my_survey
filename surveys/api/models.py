@@ -17,7 +17,7 @@ class Survey(models.Model):
         verbose_name='Название'
     )
     start_date = models.DateField(
-        default=date.today,
+        # default=date.today,
         # default=timezone.localdate,
         verbose_name='Дата старта',
     )
@@ -42,7 +42,7 @@ class Survey(models.Model):
     def clean(self):
         if self.start_date and self.end_date:
             delta = self.end_date - self.start_date
-            if delta.days < 2:
+            if delta.days < 3:
                 raise ValidationError(
                     {'end_date':
                         'Дата окончания - не менее 3 дней от даты старта.'}
@@ -62,12 +62,12 @@ class Survey(models.Model):
 # def survey_expire(sender, instance, **kwargs):
 #     instance.check_survey()
 
-
-@receiver(post_save, sender=Survey)
-def set_survey_expired(sender, instance, **kwargs):
-    if timezone.localdate() > instance.end_date:
-        instance.is_active = False
-        instance.save()
+# # это не работает!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+# @receiver(post_save, sender=Survey)
+# def set_survey_expired(sender, instance, **kwargs):
+#     if timezone.localdate() > instance.end_date:
+#         instance.is_active = False
+#         instance.save()
 
 
 class Question(models.Model):
