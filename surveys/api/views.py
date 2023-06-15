@@ -3,13 +3,24 @@
 from django.http import Http404
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework.permissions import IsAdminUser
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.mixins import (
+    CreateModelMixin,
+    UpdateModelMixin,
+    DestroyModelMixin,
+    ListModelMixin
+)
+from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
-from .models import Question, Survey, Variant
-from .permissios import IsAdminOrReadOnly
+from .validators import validate_user_id
+
+
+from .models import Answer, Question, Survey, Variant
+from .permissios import IsAdminOrCreateReadOnly, IsAdminOrReadOnly
 from .serializers import (
+    AnswerSerializer,
     QuestionSerializer,
+    ResultViewSerializer,
     SurveySerializerAdmin,
     SurveySerializerPublic,
     VariantSerializer,
@@ -85,23 +96,35 @@ class QuestionViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         survey_id = self.kwargs.get('survey_id')
-        survey = Survey.objects.get(id=survey_id)
+        try:
+            survey = Survey.objects.get(id=survey_id)
+        except Survey.DoesNotExist:
+            raise Http404("Опрос id {} не существует".format(survey_id))
         serializer.save(survey=survey)
 
 
-@extend_schema(tags=["Варианты ответов"])
 @extend_schema_view(
-    list=extend_schema(summary='Список вариантов ответов'),
-    retrieve=extend_schema(summary='Деталка вариантов ответов'),
-    create=extend_schema(summary='Создать вариант ответа'),
-    update=extend_schema(summary='Изменить вариант ответа'),
-    partial_update=extend_schema(summary='Изменить вариант ответа частично'),
-    destroy=extend_schema(summary='Удалить вариант ответа'),
+    list=extend_schema(summary='Получить список вариантов ответа на вопрос',
+                       tags=["Прохождение опроса и просмотр результатов"]),
+    retrieve=extend_schema(summary='Получить один вариант ответа на вопрос',
+                           tags=["Прохождение опроса и просмотр результатов"]),
+    create=extend_schema(summary='Создать вариант ответа',
+                         tags=["Варианты ответов на вопросы"]),
+    update=extend_schema(summary='Изменить вариант ответа',
+                         tags=["Варианты ответов на вопросы"]),
+    partial_update=extend_schema(summary='Изменить вариант ответа частично',
+                                 tags=["Варианты ответов на вопросы"]),
+    destroy=extend_schema(summary='Удалить вариант ответа',
+                          tags=["Варианты ответов на вопросы"]),
 )
-class VariantViewSet(ModelViewSet):
+class VariantViewSet(CreateModelMixin,
+                     UpdateModelMixin,
+                     DestroyModelMixin,
+                     ListModelMixin,
+                     GenericViewSet):
     queryset = Variant.objects.all()
     serializer_class = VariantSerializer
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminOrReadOnly,)
     http_method_names = ('get', 'post', 'put', 'delete')
 
     def perform_create(self, serializer):
@@ -138,3 +161,75 @@ class VariantViewSet(ModelViewSet):
                 question_id
             ))
         return variants
+
+
+@extend_schema(tags=["Прохождение опроса и просмотр результатов"])
+@extend_schema_view(
+    create=extend_schema(summary='Ответить на вопрос'),
+    update=extend_schema(summary='Изменить ответ на вопрос'),
+    partial_update=extend_schema(summary='Изменить ответ на вопрос частично'),
+    destroy=extend_schema(summary='Удалить ответ на вопрос'),
+)
+class AnswerViewSet(CreateModelMixin,
+                    UpdateModelMixin,
+                    DestroyModelMixin,
+                    GenericViewSet):
+    queryset = Answer
+    serializer_class = AnswerSerializer
+    permission_classes = [IsAdminOrCreateReadOnly, ]
+    http_method_names = ('get', 'post', 'put', 'delete')
+
+    def perform_create(self, serializer):
+        user_id = self.kwargs.get('user_id')
+        validate_user_id(user_id)
+        survey_id = self.kwargs.get('survey_id')
+        question_id = self.kwargs.get('question_id')
+        try:
+            survey = Survey.objects.get(id=survey_id)
+        except Survey.DoesNotExist:
+            raise Http404("Опрос id {} не существует".format(survey_id))
+        try:
+            question = Question.objects.get(id=question_id, survey=survey)
+        except Question.DoesNotExist:
+            raise Http404("Вопрос id {} не существует в опросе id {}".format(
+                question_id, survey_id
+            ))
+        serializer.save(question=question, survey=survey, user_id=user_id)
+
+    def perform_update(self, serializer):
+        user_id = self.kwargs.get('user_id')
+        if user_id:
+            validate_user_id(user_id)
+        serializer.save()
+
+    def get_queryset(self):
+        survey_id = self.kwargs.get('survey_id')
+        question_id = self.kwargs.get('question_id')
+        try:
+            survey = Survey.objects.get(id=survey_id)
+        except Survey.DoesNotExist:
+            raise Http404("Опрос id {} не существует".format(survey_id))
+        try:
+            question = Question.objects.get(id=question_id, survey=survey)
+        except Question.DoesNotExist:
+            raise Http404("Вопрос id {} не существует в опросе id {}".format(
+                question_id, survey_id
+            ))
+        answers = question.answers.all()
+        if not answers.exists():
+            raise Http404("Вопрос id {} не имеет ответов пользователя".format(
+                question_id
+            ))
+        return answers
+
+
+@extend_schema(tags=["Прохождение опроса и просмотр результатов"])
+@extend_schema_view(
+        list=extend_schema(summary='Просмотр результатов опросов по ID'),
+)
+class ResultViewSet(ListModelMixin,
+                    GenericViewSet):
+    serializer_class = ResultViewSerializer
+    queryset = Survey.objects.all()
+    permission_classes = [AllowAny, ]
+

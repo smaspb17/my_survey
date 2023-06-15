@@ -2,7 +2,13 @@ from django.urls import include, path
 from rest_framework import routers
 
 from .spectacular.urls import urlpatterns as doc_urls
-from .views import QuestionViewSet, SurveyViewSet, VariantViewSet
+from .views import (
+    AnswerViewSet,
+    QuestionViewSet,
+    ResultViewSet,
+    SurveyViewSet,
+    VariantViewSet,
+)
 
 # app_name = 'api'
 
@@ -22,7 +28,16 @@ router.register(
     viewset=VariantViewSet,
     basename='variants',
 )
-
+router.register(
+    prefix=r'(?P<user_id>[\d]+)/surveys/(?P<survey_id>[\d]+)/questions/(?P<question_id>[\d]+)/answers',
+    viewset=AnswerViewSet,
+    basename='answers',
+)
+router.register(
+    prefix=r'(?P<user_id>[\d]+)/surveys',
+    viewset=ResultViewSet,
+    basename='answer_lists',
+)
 urlpatterns = [
     path('v1/', include(router.urls)),
 ]

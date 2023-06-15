@@ -25,7 +25,7 @@ class SurveyAdmin(admin.ModelAdmin):
     fields = (
         'name', 'description', 'start_date', 'end_date', 'is_active', 'user',
     )
-    # readonly_fields = ('start_date',)
+    readonly_fields = ('start_date',)
     list_display = (
         'id', 'name', 'description', 'start_date', 'end_date', 'is_active',
         'user',
@@ -49,8 +49,9 @@ class VariantAdmin(admin.ModelAdmin):
         'text', 'question',
     )
     list_display = (
-        'text', 'question',
+        'id', 'text', 'question',
     )
+    
 
 
 @admin.register(Answer)

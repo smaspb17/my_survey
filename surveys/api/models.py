@@ -1,3 +1,4 @@
+from datetime import date
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -11,7 +12,7 @@ class Survey(models.Model):
         verbose_name='Название'
     )
     start_date = models.DateField(
-        # default=date.today,
+        default=date.today,
         # default=timezone.localdate,
         verbose_name='Дата старта',
     )
@@ -107,9 +108,16 @@ class Variant(models.Model):
     def __str__(self):
         return self.text
 
+    def clean(self):
+        question_type = self.question.type
+        if question_type == Question.Type.TEXT:
+            raise ValidationError(
+                "Данный вопрос текстовый, без вариантов ответа"
+            )
+
 
 class Answer(models.Model):
-    user_id = models.IntegerField()
+    user_id = models.CharField(max_length=10)
     answer = models.TextField(verbose_name='Ответ пользователя')
     survey = models.ForeignKey(
         Survey,
@@ -127,3 +135,9 @@ class Answer(models.Model):
     class Meta:
         verbose_name = 'Ответ'
         verbose_name_plural = 'Ответы'
+        # constraints = [
+        #     UniqueConstraint(
+        #         fields=['question', 'survey'],
+        #         name='unique_answer'
+        #     )
+        # ]
