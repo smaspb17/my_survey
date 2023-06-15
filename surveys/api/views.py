@@ -91,28 +91,15 @@ class QuestionViewSet(ModelViewSet):
         return obj
 
     def perform_create(self, serializer):
-        survey_id = get_object_or_404(
-            klass=Survey, id=self.kwargs.get('survey_id')
-        )
+        survey_id = self.kwargs.get('survey_id')
+        survey = Survey.objects.get(id=survey_id)
         serializer.save(survey=survey)
-
-    def perform_create(self, serializer):
-        survey = get_object_or_404(
-            klass=Survey, id=self.kwargs.get('survey_id')
-        )
-        serializer.save(survey=survey)
-
-    # def get_queryset(self):
-    #     review = get_object_or_404(
-    #         klass=Review, id=self.kwargs.get('review_id')
-    #     )
-    #     return review.comments.all()
 
     # def perform_create(self, serializer):
-    #     review = get_object_or_404(
-    #         klass=Review, id=self.kwargs.get('review_id')
+    #     survey = get_object_or_404(
+    #         klass=Survey, id=self.kwargs.get('survey_id')
     #     )
-    #     serializer.save(author=self.request.user, review=review)
+    #     serializer.save(survey=survey)
 
 
 class VariantViewSet(CreateModelMixin,

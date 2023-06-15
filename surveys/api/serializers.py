@@ -5,7 +5,6 @@ from rest_framework.serializers import (
     SlugRelatedField,
     StringRelatedField,
     ValidationError,
-    DateField
 )
 
 from .models import Question, Survey, Variant
@@ -19,16 +18,12 @@ class SurveySerializerAdmin(ModelSerializer):
         model = Survey
         fields = ('id', 'name', 'description', 'is_active',
                   'start_date', 'end_date', 'questions',)
-        # read_only_fields = ('start_date',)
-        # extra_kwargs = {'start_date': {'read_only': True}}
 
     def create(self, validated_data):
-        start_date = validated_data.get('start_date')
-        print(start_date)
+        # start_date = date.today()
         # start_date = timezone.localdate()
+        start_date = validated_data.get('start_date')
         end_date = validated_data.get('end_date')
-        print(end_date)
-        print(date.today())
         delta = end_date - start_date
         if start_date < date.today() or end_date < date.today():
             raise ValidationError(
@@ -76,8 +71,11 @@ class SurveySerializerPublic(ModelSerializer):
 
 
 class QuestionSerializer(ModelSerializer):
-    survey = SlugRelatedField(queryset=Question.objects.all(),
-                              slug_field='name')
+    # survey = StringRelatedField(read_only=True)
+    survey = SlugRelatedField(
+        slug_field='name',
+        read_only=True,
+    )
     variants = StringRelatedField(many=True, read_only=True)
 
     class Meta:
