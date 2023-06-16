@@ -174,6 +174,7 @@ class AnswerSerializer(ModelSerializer):
             UniqueTogetherValidator(
                 queryset=Answer.objects.all(),
                 fields=['question', 'survey', 'user_id'],
+                message='Вы уже отвечали на данный вопрос',
             )
         ]
 

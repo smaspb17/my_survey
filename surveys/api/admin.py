@@ -51,7 +51,6 @@ class VariantAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'text', 'question',
     )
-    
 
 
 @admin.register(Answer)

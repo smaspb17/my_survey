@@ -1,5 +1,3 @@
-# from rest_framework.permissions import IsAuthenticated
-
 from django.http import Http404
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
@@ -16,7 +14,7 @@ from .validators import validate_user_id
 
 
 from .models import Answer, Question, Survey, Variant
-from .permissios import IsAdminOrCreateReadOnly, IsAdminOrReadOnly
+from .permissios import IsAdminOrReadOnly
 from .serializers import (
     AnswerSerializer,
     QuestionSerializer,
@@ -109,13 +107,13 @@ class QuestionViewSet(ModelViewSet):
     retrieve=extend_schema(summary='Получить один вариант ответа на вопрос',
                            tags=["Прохождение опроса и просмотр результатов"]),
     create=extend_schema(summary='Создать вариант ответа',
-                         tags=["Варианты ответов на вопросы"]),
+                         tags=["Варианты ответов"]),
     update=extend_schema(summary='Изменить вариант ответа',
-                         tags=["Варианты ответов на вопросы"]),
+                         tags=["Варианты ответов"]),
     partial_update=extend_schema(summary='Изменить вариант ответа частично',
-                                 tags=["Варианты ответов на вопросы"]),
+                                 tags=["Варианты ответов"]),
     destroy=extend_schema(summary='Удалить вариант ответа',
-                          tags=["Варианты ответов на вопросы"]),
+                          tags=["Варианты ответов"]),
 )
 class VariantViewSet(CreateModelMixin,
                      UpdateModelMixin,
@@ -176,7 +174,7 @@ class AnswerViewSet(CreateModelMixin,
                     GenericViewSet):
     queryset = Answer
     serializer_class = AnswerSerializer
-    permission_classes = [IsAdminOrCreateReadOnly, ]
+    permission_classes = [AllowAny, ]
     http_method_names = ('get', 'post', 'put', 'delete')
 
     def perform_create(self, serializer):
@@ -225,11 +223,12 @@ class AnswerViewSet(CreateModelMixin,
 
 @extend_schema(tags=["Прохождение опроса и просмотр результатов"])
 @extend_schema_view(
-        list=extend_schema(summary='Просмотр результатов опросов по ID'),
-)
+        list=extend_schema(
+            summary='Просмотр результатов всех опросов по ID пользователя'
+        ),
+    )
 class ResultViewSet(ListModelMixin,
                     GenericViewSet):
     serializer_class = ResultViewSerializer
     queryset = Survey.objects.all()
     permission_classes = [AllowAny, ]
-
