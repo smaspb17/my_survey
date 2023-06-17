@@ -3,18 +3,16 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.mixins import (
     CreateModelMixin,
-    UpdateModelMixin,
     DestroyModelMixin,
-    ListModelMixin
+    ListModelMixin,
+    RetrieveModelMixin,
+    UpdateModelMixin,
 )
 from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
-from .validators import validate_user_id
-
-
 from .models import Answer, Question, Survey, Variant
-from .permissios import IsAdminOrReadOnly
+from .permissions import IsAdminOrReadOnly
 from .serializers import (
     AnswerSerializer,
     QuestionSerializer,
@@ -23,12 +21,17 @@ from .serializers import (
     SurveySerializerPublic,
     VariantSerializer,
 )
+from .validators import validate_user_id
 
 
 @extend_schema(tags=["Опросы"])
 @extend_schema_view(
-    list=extend_schema(summary='Список опросов'),
-    retrieve=extend_schema(summary='Деталка опроса'),
+    list=extend_schema(
+        summary='Список опросов (c вопросами и вариантами ответов)'
+    ),
+    retrieve=extend_schema(
+        summary='Деталка опроса (c вопросами и вариантами ответов)'
+    ),
     create=extend_schema(summary='Создать опрос'),
     update=extend_schema(summary='Изменить опрос'),
     partial_update=extend_schema(summary='Изменить опрос частично'),
@@ -57,40 +60,34 @@ class SurveyViewSet(ModelViewSet):
 @extend_schema(tags=["Вопросы"])
 @extend_schema_view(
     list=extend_schema(summary='Список вопросов'),
-    retrieve=extend_schema(summary='Деталка вопроса'),
+    retrieve=extend_schema(summary='Деталка вопроса (с вариантами ответов)'),
     create=extend_schema(summary='Создать вопрос'),
     update=extend_schema(summary='Изменить вопрос'),
     partial_update=extend_schema(summary='Изменить вопрос частично'),
     destroy=extend_schema(summary='Удалить вопрос'),
 )
-class QuestionViewSet(ModelViewSet):
+class QuestionViewSet(CreateModelMixin,
+                      RetrieveModelMixin,
+                      UpdateModelMixin,
+                      DestroyModelMixin,
+                      GenericViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
     permission_classes = (IsAdminUser,)
     http_method_names = ('get', 'post', 'put', 'delete')
 
-    def get_queryset(self):
+    def get_object(self):
         survey_id = self.kwargs.get('survey_id')
+        question_id = self.kwargs.get('pk')
         try:
             survey = Survey.objects.get(id=survey_id)
         except Survey.DoesNotExist:
             raise Http404("Опрос id {} не существует".format(survey_id))
-        if not survey.questions.exists():
-            raise Http404(
-                "Опрос id {} не имеет ни одного вопроса".format(survey_id)
-            )
-        return survey.questions.all()
-
-    # def get_object(self):
-    #     survey = get_object_or_404(
-    #         klass=Survey, id=self.kwargs.get('survey_id')
-    #     )
-    #     obj = get_object_or_404(
-    #         klass=Question,
-    #         id=self.kwargs.get('pk'),
-    #         survey=survey
-    #     )
-    #     return obj
+        try:
+            questions = survey.questions.get(id=question_id)
+            return questions
+        except Question.DoesNotExist:
+            raise Http404("Вопрос id {} не существует".format(question_id))
 
     def perform_create(self, serializer):
         survey_id = self.kwargs.get('survey_id')

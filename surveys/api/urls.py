@@ -24,12 +24,14 @@ router.register(
     basename='questions',
 )
 router.register(
-    prefix=r'surveys/(?P<survey_id>[\d]+)/questions/(?P<question_id>[\d]+)/variants',
+    prefix=r'surveys/(?P<survey_id>[\d]+)/questions/(?P<question_id>[\d]+)'
+           r'/variants',
     viewset=VariantViewSet,
     basename='variants',
 )
 router.register(
-    prefix=r'(?P<user_id>[\d]+)/surveys/(?P<survey_id>[\d]+)/questions/(?P<question_id>[\d]+)/answers',
+    prefix=r'(?P<user_id>[\d]+)/surveys/(?P<survey_id>[\d]+)/questions'
+           r'/(?P<question_id>[\d]+)/answers',
     viewset=AnswerViewSet,
     basename='answers',
 )

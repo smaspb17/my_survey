@@ -56,8 +56,8 @@ class VariantAdmin(admin.ModelAdmin):
 @admin.register(Answer)
 class AnswerAdmin(admin.ModelAdmin):
     fields = (
-        'answer', 'survey', 'question',
+        'answer',
     )
     list_display = (
-        'user_id', 'answer', 'survey', 'question',
+        'id', 'user_id', 'answer', 'survey', 'question',
     )

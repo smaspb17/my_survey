@@ -6,7 +6,6 @@ from rest_framework.serializers import (
     DateField,
     ModelSerializer,
     SlugRelatedField,
-    StringRelatedField,
     ValidationError,
 )
 
@@ -15,9 +14,32 @@ from .validators import validate_user_id
 from .models import Answer, Question, Survey, Variant
 
 
-# Вложенный сериализатор для SurveySerializerAdmin
-class QuestionViewSerializer(ModelSerializer):
-    variants = StringRelatedField(many=True, read_only=True)
+class VariantSerializer(ModelSerializer):
+    """Варианты ответов"""
+    class Meta:
+        model = Variant
+        fields = ('id', 'text',)
+
+    def create(self, validated_data):
+        question_type = validated_data.get('question').type
+        if question_type == Question.Type.TEXT:
+            raise ValidationError(
+                "Данный вопрос текстовый, без вариантов ответа"
+            )
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        question_type = instance.question.type
+        if question_type == Question.Type.TEXT:
+            raise ValidationError(
+                "Данный вопрос текстовый, без вариантов ответа"
+            )
+        return super().update(instance, validated_data)
+
+
+class QuestionSerializer(ModelSerializer):
+    """Вопросы"""
+    variants = VariantSerializer(many=True, read_only=True)
 
     class Meta:
         model = Question
@@ -25,7 +47,8 @@ class QuestionViewSerializer(ModelSerializer):
 
 
 class SurveySerializerAdmin(ModelSerializer):
-    questions = QuestionViewSerializer(many=True)
+    """Опросы (для админа)"""
+    questions = QuestionSerializer(many=True, read_only=True)
     # questions = StringRelatedField(many=True, read_only=True)
     start_date = DateField(default=date.today())
 
@@ -57,7 +80,7 @@ class SurveySerializerAdmin(ModelSerializer):
             raise ValidationError(
                 "Продолжительность опроса - не менее 3 дней"
             )
-        # выполняется в конце валидации
+        # выполняется в конце валидации если нужно
         # validated_data['start_date'] = date.today()
         return super().create(validated_data)
 
@@ -80,60 +103,8 @@ class SurveySerializerAdmin(ModelSerializer):
         return super().update(instance, validated_data)
 
 
-# Просмотр активных опросов анонимами
-class SurveySerializerPublic(ModelSerializer):
-    class Meta:
-        model = Survey
-        fields = ('id', 'name', 'description', 'start_date', 'end_date',)
-
-
-# вложенный сериализатор для QuestionSerializer
-class VariantViewSerializer(ModelSerializer):
-
-    class Meta:
-        model = Variant
-        fields = ('id', 'text',)
-
-
-class QuestionSerializer(ModelSerializer):
-    # survey = StringRelatedField(read_only=True)
-    survey = SlugRelatedField(
-        slug_field='name',
-        read_only=True,
-    )
-    variants = VariantViewSerializer(many=True)
-    # variants = StringRelatedField(many=True, read_only=True)
-
-    class Meta:
-        model = Question
-        fields = ('id', 'text', 'type', 'survey', 'variants')
-
-
-class VariantSerializer(ModelSerializer):
-
-    class Meta:
-        model = Variant
-        fields = ('id', 'text',)
-
-    def create(self, validated_data):
-        question_type = validated_data.get('question').type
-        if question_type == Question.Type.TEXT:
-            raise ValidationError(
-                "Данный вопрос текстовый, без вариантов ответа"
-            )
-        return super().create(validated_data)
-
-    def update(self, instance, validated_data):
-        question_type = instance.question.type
-        if question_type == Question.Type.TEXT:
-            raise ValidationError(
-                "Данный вопрос текстовый, без вариантов ответа"
-            )
-        return super().update(instance, validated_data)
-
-
-# обход ограчения UniqueTogetherValidator в части обязательных полей
 class FromContext(object):
+    """Обход ограчения UniqueTogetherValidator в части обязательных полей"""
     requires_context = True
 
     def __init__(self, value_fn):
@@ -145,6 +116,7 @@ class FromContext(object):
 
 
 class AnswerSerializer(ModelSerializer):
+    """Ответы на вопросы"""
     user_id = CharField(
         max_length=10,
         read_only=True,
@@ -183,7 +155,13 @@ class AnswerSerializer(ModelSerializer):
         return value
 
 
-# вложенный сериализатор для ResultViewSerializer
+class SurveySerializerPublic(ModelSerializer):
+    """Активные опросы (для пользователя)"""
+    class Meta:
+        model = Survey
+        fields = ('id', 'name', 'description', 'start_date', 'end_date',)
+
+
 class AnswerListSerializer(ModelSerializer):
     question = SlugRelatedField(
         slug_field='text',
@@ -196,6 +174,7 @@ class AnswerListSerializer(ModelSerializer):
 
 
 class ResultViewSerializer(ModelSerializer):
+    """Результаты опросов"""
     answers = AnswerListSerializer(many=True)
 
     class Meta:

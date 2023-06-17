@@ -7,9 +7,6 @@ class IsAdminOrReadOnly(BasePermission):
             return True
         return request.user.is_superuser
 
-    # def has_object_permission(self, request, view, obj):
-    #     return super().has_object_permission(request, view, obj)
-
 
 class IsAdminOrCreateReadOnly(BasePermission):
     def has_permission(self, request, view):

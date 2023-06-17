@@ -46,12 +46,6 @@ class Survey(models.Model):
     def __str__(self):
         return f'{self.name} №{self.pk}'
 
-#     def check_survey(self):
-#         if self.end_date < timezone.now().date():
-#             self.is_active = False
-#             self.save()
-
-
 # # сигнал на деактивацию опроса по истечении срока
 # @receiver(post_save, sender=Survey)
 # def survey_expire(sender, instance, **kwargs):
