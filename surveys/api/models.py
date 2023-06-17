@@ -1,10 +1,5 @@
-# import uuid
 from datetime import date
 from django.contrib.auth import get_user_model
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
-from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -42,7 +37,7 @@ class Survey(models.Model):
     def clean(self):
         if self.start_date and self.end_date:
             delta = self.end_date - self.start_date
-            if delta.days < 2:
+            if delta.days < 3:
                 raise ValidationError(
                     {'end_date':
                         'Дата окончания - не менее 3 дней от даты старта.'}
@@ -51,23 +46,17 @@ class Survey(models.Model):
     def __str__(self):
         return f'{self.name} №{self.pk}'
 
-#     def check_survey(self):
-#         if self.end_date < timezone.now().date():
-#             self.is_active = False
-#             self.save()
-
-
 # # сигнал на деактивацию опроса по истечении срока
 # @receiver(post_save, sender=Survey)
 # def survey_expire(sender, instance, **kwargs):
 #     instance.check_survey()
 
-
-@receiver(post_save, sender=Survey)
-def set_survey_expired(sender, instance, **kwargs):
-    if timezone.localdate() > instance.end_date:
-        instance.is_active = False
-        instance.save()
+# # это не работает!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+# @receiver(post_save, sender=Survey)
+# def set_survey_expired(sender, instance, **kwargs):
+#     if timezone.localdate() > instance.end_date:
+#         instance.is_active = False
+#         instance.save()
 
 
 class Question(models.Model):
@@ -113,9 +102,16 @@ class Variant(models.Model):
     def __str__(self):
         return self.text
 
+    def clean(self):
+        question_type = self.question.type
+        if question_type == Question.Type.TEXT:
+            raise ValidationError(
+                "Данный вопрос текстовый, без вариантов ответа"
+            )
+
 
 class Answer(models.Model):
-    user_id = models.IntegerField()
+    user_id = models.CharField(max_length=10)
     answer = models.TextField(verbose_name='Ответ пользователя')
     survey = models.ForeignKey(
         Survey,
@@ -133,3 +129,9 @@ class Answer(models.Model):
     class Meta:
         verbose_name = 'Ответ'
         verbose_name_plural = 'Ответы'
+        # constraints = [
+        #     UniqueConstraint(
+        #         fields=['question', 'survey'],
+        #         name='unique_answer'
+        #     )
+        # ]
