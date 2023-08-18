@@ -1,103 +1,49 @@
 # My survey
 **ОПИСАНИЕ:**
+My survey - это простой учебный Pet-проект, в рамках изучения Django REST framework (DRF). В проекте реализован опрос анонимных пользователей - введение ответов на вопросы, их сохранения в БД и получения результатов, с системой аутентификации пользователя по ID. Проект выполнен по техническому заданию (ниже по тексту), найденному мной в сети Интернет. Проект разрабатан с использованием DRF для реализации REST API, включает в себя компоненты, необходимые для предоставления API-сервисов, такие как маршрутизация URL, сериализаторы, модели, представления, аутентификация, управление доступом, обеспечивает поддержку формата передачи данных JSON. Для использования Версия Python должна быть не ниже 3.6.
 
-My survey - это учебный Pet-проект для изучения Django REST framework (DRF). Проект предназначен для опроса анонимных пользователь по введенному ими ID и выводу результатов. Выполнен по техническому заданию (ниже по тексту), найденному мной в сети Интернет. Проект разрабатан с использованием DRF для реализации REST API, включает в себя компоненты, необходимые для предоставления API-сервисов, такие как маршрутизация URL, сериализаторы, модели, представления, аутентификация, управление доступом, обеспечивает поддержку для формата зaпросов JSON.
+**СТЕК ТЕХНОЛОГИЙ:**
+Python 3, Django Rest Framework 3.14, SQLite3, drf-spectacular, swagger  
 
 **ЛОКАЛЬНАЯ УСТАНОВКА:**
 
-1. Установить Python на компьютер, если он еще не установлен. Версия Python должна быть не ниже 3.6.
+1. Клонировать проект на свой компьютер:
+```
+git clone git@github.com:smaspb17/my_survey.git
+```
+2. Перейти в директорию my_survey:
+```
+cd my_survey/
+```
+3. Создать виртуальное окружение для проекта. Это позволит изолировать проект от системных зависимостей и установленных библиотек. Для создания виртуального окружения используется команда:
+```
+python -m venv venv
+```
+4. Активировать виртуальное окружение командой:
+```
+source venv/Scripts/activate
+```
 
-2. Создать виртуальное окружение для проекта. Это позволит изолировать проект от системных зависимостей и установленных библиотек. Для создания виртуального окружения используется команда:
-```
-python -m venv myenv
-```
-
-3. Активировать виртуальное окружение командой:
-```
-source myenv/bin/activate
-```
-
-4. Установить необходимые пакеты и зависимости проекта через менеджер пакетов `pip` и `requirements.txt` файл. Он должен содержать в себе список всех зависимостей, необходимых для работы проекта:
+5. Установить необходимые пакеты и зависимости проекта через менеджер пакетов `pip` и `requirements.txt` файл. Он должен содержать в себе список всех зависимостей, необходимых для работы проекта:
 ```
 pip install -r requirements.txt
 ```
-
-5. Установить Django и Django Rest Framework через pip:
+6. При необходимости обновить пакетный менеджер pip:
+``` 
+python.exe -m pip install --upgrade pip
 ```
-pip install django djangorestframework
+7. Перейти в директорию surveys, там находится файл manage.py:
 ```
-
-6. Создать Django проект командой:
+cd my_survey/surveys
 ```
-django-admin startproject myproject
-```
-
-7. Создать Django приложение командой:
-```
-python manage.py startapp myapp
-```
-
-8. Настроить базу данных в настройках проекта в файле settings.py. Например, можно использовать SQLite в качестве БД:
-```
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-```
-
-9. Создать модели для работы с данными в БД. Пример:
-```python
-from django.db import models
-
-class Book(models.Model):
-    title = models.CharField(max_length=200)
-    author = models.CharField(max_length=200)
-    published_at = models.DateField()
-```
-
-10. Создать сериализаторы (Serializers) для преобразования объектов моделей в форматы JSON (или другой, например XML) и наоборот. Пример:
-```python
-from rest_framework import serializers
-from .models import Book
-
-class BookSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Book
-        fields = '__all__'
-```
-
-11. Создать Views для обработки запросов и возврата ответов в нужном формате. Пример:
-```python
-from rest_framework import viewsets
-from .models import Book
-from .serializers import BookSerializer
-
-class BookViewSet(viewsets.ModelViewSet):
-    queryset = Book.objects.all().order_by('title')
-    serializer_class = BookSerializer
-```
-
-12. Зарегистрировать URLs приложения для обработки запросов. Пример:
-```python
-from django.urls import include, path
-from rest_framework import routers
-from .views import BookViewSet
-
-router = routers.DefaultRouter()
-router.register(r'books', BookViewSet)
-
-urlpatterns = [
-    path('', include(router.urls)),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-]
-```
-
-После этих действий, API проект должен быть готов к запуску на локальном компьютере. Запуск проекта осуществляется командой:
+8. Запустить проект на локальном сервере:
 ```
 python manage.py runserver
 ```
+9. Перейти по ссылке в браузере, для использования swagger:
+```
+http://127.0.0.1:8000/api/
+``` 
 
 **АВТОР:** Шайбаков Марат
 
