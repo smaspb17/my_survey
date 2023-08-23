@@ -5,7 +5,7 @@ My survey - это простой учебный Pet-проект, в рамка
 
 **СТЕК ТЕХНОЛОГИЙ:**
 Python 3.11, Django Rest Framework 3.14, SQLite3, django-filter, drf-spectacular   
-
+![](https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=smaspb17&theme=discord_old_blurple)
 **ЛОКАЛЬНАЯ УСТАНОВКА (для Windows):**
 
 1. Клонируй проект на свой компьютер:
